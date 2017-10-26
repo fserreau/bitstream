@@ -1,8 +1,7 @@
-package main
+package bitstream
 
 import (
 	"errors"
-	"fmt"
 )
 
 type Bitstream struct {
@@ -33,9 +32,9 @@ func (stream *Bitstream) ReadBit() (uint8, error) {
 }
 
 // ReadBits : Read a defined number of bits and return an array
-func (stream *Bitstream) ReadBits(numBits int) ([]uint8, error) {
+func (stream *Bitstream) ReadBits(numBits uint) ([]uint8, error) {
 	bits := make([]uint8, 0)
-	cpt := 0
+	cpt := uint(0)
 	for cpt < numBits {
 		bit, err := stream.ReadBit()
 		if err != nil {
@@ -47,13 +46,35 @@ func (stream *Bitstream) ReadBits(numBits int) ([]uint8, error) {
 	return bits, nil
 }
 
-// ReadByte : get the next 8bits as a byte
-func (stream *Bitstream) ReadByte() (byte, error) {
-	bits, err := stream.ReadBits(8)
+func (stream *Bitstream) ReadBitsAsInt(numBits uint) (uint, error) {
+	bits, err := stream.ReadBits(numBits)
 	if err != nil {
 		return 0x00, err
 	}
-	return bits[7] + (2 * bits[6]) + (4 * bits[5]) + (8*bits[4] + (16 * bits[3]) + (32 * bits[2]) + (64 * bits[1]) + (128 * bits[0])), nil
+
+	// Casting bits to an integer
+	num := uint(0)
+	for bitIdx := len(bits); bitIdx > 0; bitIdx-- {
+		bit := bits[bitIdx-1]
+		num += uint(bit << uint(len(bits)-(bitIdx)))
+	}
+
+	// sending data back
+	return num, nil
+}
+
+func (stream *Bitstream) ReadBytes(numBytes uint) ([]uint, error) {
+	bytes := make([]uint, 0)
+	cpt := uint(0)
+	for cpt < numBytes {
+		bits, err := stream.ReadBitsAsInt(8)
+		if err != nil {
+			return bytes, err
+		}
+		bytes = append(bytes, bits)
+		cpt++
+	}
+	return bytes, nil
 }
 
 func (stream *Bitstream) ReadGolomb(signed bool) (int, error) {
@@ -68,7 +89,6 @@ func (stream *Bitstream) ReadGolomb(signed bool) (int, error) {
 			break
 		}
 	}
-	fmt.Println(data)
 	tlen := len(data)
 
 	// Concatenation of the end of bit array
@@ -81,7 +101,6 @@ func (stream *Bitstream) ReadGolomb(signed bool) (int, error) {
 		data = append(data, bit)
 		i++
 	}
-	fmt.Println(data)
 
 	// Casting bits into an integer
 	num := 0
@@ -100,16 +119,4 @@ func (stream *Bitstream) ReadGolomb(signed bool) (int, error) {
 		}
 	}
 	return num, nil
-}
-
-func main() {
-	bitStream := InitStream([]byte{0x3F, 0x9D, 0x10})
-	for {
-		num, err := bitStream.ReadGolomb(false)
-		if err != nil {
-			fmt.Println(err)
-			break
-		}
-		fmt.Println(num)
-	}
 }
