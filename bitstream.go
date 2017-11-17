@@ -127,5 +127,5 @@ func (stream *Bitstream) ReadGolomb(signed bool) (int, error) {
 
 // Remains function send the number of present bits in the stream
 func (stream *Bitstream) Remains() int {
-	return len(stream.data) - stream.offset
+	return len(stream.data) - int(stream.offset)
 }
