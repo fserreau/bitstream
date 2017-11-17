@@ -4,6 +4,7 @@ import (
 	"errors"
 )
 
+// Bitstream : core object
 type Bitstream struct {
 	data   []byte
 	offset uint8
@@ -46,6 +47,7 @@ func (stream *Bitstream) ReadBits(numBits uint) ([]uint8, error) {
 	return bits, nil
 }
 
+// ReadBitsAsInt : Read a defined number of bits and return as an unsigned int
 func (stream *Bitstream) ReadBitsAsInt(numBits uint) (uint, error) {
 	bits, err := stream.ReadBits(numBits)
 	if err != nil {
@@ -63,6 +65,7 @@ func (stream *Bitstream) ReadBitsAsInt(numBits uint) (uint, error) {
 	return num, nil
 }
 
+// ReadBytes: Read a defined number of bytes and returns the value as uint array
 func (stream *Bitstream) ReadBytes(numBytes uint) ([]uint, error) {
 	bytes := make([]uint, 0)
 	cpt := uint(0)
@@ -77,6 +80,7 @@ func (stream *Bitstream) ReadBytes(numBytes uint) ([]uint, error) {
 	return bytes, nil
 }
 
+// ReadGolomb : Returns a int value (signed or not) from bitstream using Exp-Golomb code
 func (stream *Bitstream) ReadGolomb(signed bool) (int, error) {
 	data := make([]uint8, 0)
 	for {
@@ -119,4 +123,9 @@ func (stream *Bitstream) ReadGolomb(signed bool) (int, error) {
 		}
 	}
 	return num, nil
+}
+
+// Remains function send the number of present bits in the stream
+func (stream *Bitstream) Remains() int {
+	return len(stream.data) - stream.offset
 }
